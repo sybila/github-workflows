@@ -53,8 +53,6 @@ jobs:
       - minimum-supported
     permissions:
       contents: write  # required to create a release
-    env:
-      REPOSITORY: "https://github.com/sybila/biodivine-hctl-model-checker"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
