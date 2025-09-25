@@ -49,7 +49,7 @@ jobs:
   # Run basic code validity check.
   check:
     needs: fmt
-    name: Check
+    name: Build Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,7 +85,7 @@ jobs:
 
   # Validate minimum supported Rust version declared in Cargo.toml.
   minimum-supported:
-    name: Minimum supported version - Check and Test
+    name: Minimum Version
     needs: fmt
     runs-on: ubuntu-latest
     steps:
@@ -99,7 +99,7 @@ jobs:
   # Compute code coverage
   codecov:
     needs: test
-    name: Code coverage
+    name: Code Coverage
     runs-on: ubuntu-latest
     env:
       CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"

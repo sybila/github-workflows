@@ -22,7 +22,7 @@ env:
 jobs:
   # Validate minimum supported Rust version declared in Cargo.toml.
   minimum-supported:
-    name: Minimum supported version - Check and Test
+    name: Minimum version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
       - run: cargo test --all-features
 
   crates_io_publish:
-    name: Publish (crates.io)
+    name: Publish (Crates.io)
     needs:
       - minimum-supported
     runs-on: ubuntu-latest
@@ -47,7 +47,7 @@ jobs:
           CRATES_IO_API_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
 
   generate-notes:
-    name: Generate release notes (gemini)
+    name: Release Notes (Gemini)
     runs-on: ubuntu-latest
     needs:
       - minimum-supported
