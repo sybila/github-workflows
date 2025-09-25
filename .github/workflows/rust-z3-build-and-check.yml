@@ -1,0 +1,154 @@
+name: Reusable Rust build and validation workflow
+
+on:
+  workflow_call:
+    inputs:
+      rust-version:
+        required: true
+        type: string
+      min-rust-version:
+        required: true
+        type: string
+      z3-version:
+        required: true
+        type: string
+    secrets:
+      CODECOV_TOKEN:
+        required: true
+
+env:
+  # A fixed version used for testing, so that the builds don't
+  # spontaneously break after a few years.
+  # Make sure to update this from time to time.
+  RUST_VERSION: ${{ inputs.rust-version }}
+  MIN_RUST_VERSION: ${{ inputs.min-rust-version }}
+  Z3_VERSION: ${{ inputs.z3-version }}
+  RUSTFLAGS: "-D warnings"
+  RUSTDOCFLAGS: "-D warnings"
+
+jobs:
+  # Checks syntax formatting.
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+
+  # Check docs
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - run: cargo doc --all-features
+
+  # Run basic code validity check.
+  check:
+    needs: fmt
+    name: Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - run: cargo check --all-features
+
+  # Run tests.
+  test:
+    needs: check
+    name: Test Suite (linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Z3.
+        id: z3
+        uses: cda-tum/setup-z3@v1
+        with:
+          version: ${{ env.Z3_VERSION }}
+          add_to_library_path: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - run: cargo test --all-features
+
+  # Checks code style.
+  clippy:
+    needs: check
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: clippy
+      - run: cargo clippy --all-features
+
+  # Validate minimum supported Rust version declared in Cargo.toml.
+  minimum-supported:
+    name: Minimum Version
+    needs: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Z3.
+        id: z3
+        uses: cda-tum/setup-z3@v1
+        with:
+          version: ${{ env.Z3_VERSION }}
+          add_to_library_path: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.MIN_RUST_VERSION }}
+      - run: cargo check --all-features
+      - run: cargo test --all-features
+
+  # Compute code coverage
+  codecov:
+    needs: test
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout.
+        uses: actions/checkout@v4
+      - name: Setup Z3.
+        id: z3
+        uses: cda-tum/setup-z3@v1
+        with:
+          version: ${{ env.Z3_VERSION }}
+          add_to_library_path: true
+      # For some reason, `tarpaulin` can't see the newer version of Z3 installed
+      # by `setup-z3` assuming an older version is already installed.
+      # So, let's remove the older version...
+      - run: sudo apt remove libz3-dev
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      # Install action using cargo-binstall, which is faster because we don't have to compile tarpaulin every time.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-tarpaulin
+      - run: cargo tarpaulin --verbose --lib --examples --all-features --out xml
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v4
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        with:
+          token: ${{ env.CODECOV_TOKEN }}
+        env:
+          CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: cobertura.xml
