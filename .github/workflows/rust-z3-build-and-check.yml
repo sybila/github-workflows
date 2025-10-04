@@ -134,12 +134,16 @@ jobs:
       - run: sudo apt remove libz3-dev
       - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: ${{ env.RUST_VERSION }}
+          # Tarpaulin requires nightly toolchain.
+          # (this overrides default settings)
+          toolchain: nightly
       # Install action using cargo-binstall, which is faster because we don't have to compile tarpaulin every time.
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-tarpaulin
-      - run: cargo tarpaulin --lib --doc --examples --all-features --out xml
+      - name: Generate code coverage
+        run: |
+          cargo +nightly tarpaulin --lib --doc --examples --all-features --out xml
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v4
         if: ${{ env.CODECOV_TOKEN != '' }}
