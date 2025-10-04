@@ -101,12 +101,19 @@ jobs:
     needs: test
     name: Code Coverage
     runs-on: ubuntu-latest
-    container:
-      image: xd009642/tarpaulin:develop-nightly
-      options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout.
         uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          # Tarpaulin requires nightly toolchain.
+          # (this overrides default settings)
+          toolchain: nightly
+      # Install action using cargo-binstall.
+      # (faster because we don't have to compile tarpaulin)
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-tarpaulin
       - name: Generate code coverage
         run: |
           cargo +nightly tarpaulin --lib --doc --examples --all-features --out xml
