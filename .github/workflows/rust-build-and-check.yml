@@ -101,17 +101,15 @@ jobs:
     needs: test
     name: Code Coverage
     runs-on: ubuntu-latest
+    container:
+      image: xd009642/tarpaulin:develop-nightly
+      options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout.
         uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
-      # Install action using cargo-binstall, which is faster because we don't have to compile tarpaulin every time.
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-tarpaulin
-      - run: cargo tarpaulin --lib --doc --examples --all-features --out xml
+      - name: Generate code coverage
+        run: |
+          cargo +nightly tarpaulin --lib --doc --examples --all-features --out xml
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v4
         if: ${{ env.CODECOV_TOKEN != '' }}
