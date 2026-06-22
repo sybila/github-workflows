@@ -12,6 +12,10 @@ on:
       z3-version:
         required: true
         type: string
+      features:
+        required: false
+        type: string
+        default: '--all-features'
     secrets:
       CODECOV_TOKEN:
         required: true
@@ -23,6 +27,7 @@ env:
   RUST_VERSION: ${{ inputs.rust-version }}
   MIN_RUST_VERSION: ${{ inputs.min-rust-version }}
   Z3_VERSION: ${{ inputs.z3-version }}
+  CARGO_FEATURES: ${{ inputs.features }}
   RUSTFLAGS: "-D warnings"
   RUSTDOCFLAGS: "-D warnings"
 
@@ -48,7 +53,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
-      - run: cargo doc --all-features
+      - run: cargo doc ${{ env.CARGO_FEATURES }}
 
   # Run basic code validity check.
   check:
@@ -60,7 +65,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
-      - run: cargo check --all-features
+      - run: cargo check ${{ env.CARGO_FEATURES }}
 
   # Run tests.
   test:
@@ -80,7 +85,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
-      - run: cargo test --all-features
+      - run: cargo test ${{ env.CARGO_FEATURES }}
 
   # Checks code style.
   clippy:
@@ -93,7 +98,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VERSION }}
           components: clippy
-      - run: cargo clippy --all-features
+      - run: cargo clippy ${{ env.CARGO_FEATURES }}
 
   # Validate minimum supported Rust version declared in Cargo.toml.
   minimum-supported:
@@ -111,8 +116,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.MIN_RUST_VERSION }}
-      - run: cargo check --all-features
-      - run: cargo test --all-features
+      - run: cargo check ${{ env.CARGO_FEATURES }}
+      - run: cargo test ${{ env.CARGO_FEATURES }}
 
   # Compute code coverage
   codecov:
@@ -143,7 +148,7 @@ jobs:
           tool: cargo-tarpaulin
       - name: Generate code coverage
         run: |
-          cargo +nightly tarpaulin --lib --doc --examples --all-features --out xml
+          cargo +nightly tarpaulin --lib --doc --examples ${{ env.CARGO_FEATURES }} --out xml
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v6
         if: ${{ env.CODECOV_TOKEN != '' }}

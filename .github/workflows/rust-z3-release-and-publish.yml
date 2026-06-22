@@ -12,6 +12,10 @@ on:
       z3-version:
         required: true
         type: string
+      features:
+        required: false
+        type: string
+        default: '--all-features'
     secrets:
       GEMINI_API_KEY:
         required: true
@@ -22,6 +26,7 @@ env:
   MIN_RUST_VERSION: ${{ inputs.min-rust-version }}
   REPOSITORY: ${{ inputs.repository-url }}
   Z3_VERSION: ${{ inputs.z3-version }}
+  CARGO_FEATURES: ${{ inputs.features }}
 
 jobs:
   # Validate minimum supported Rust version declared in Cargo.toml.
@@ -39,8 +44,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.MIN_RUST_VERSION }}
-      - run: cargo check --all-features
-      - run: cargo test --all-features
+      - run: cargo check ${{ env.CARGO_FEATURES }}
+      - run: cargo test ${{ env.CARGO_FEATURES }}
 
   crates_io_publish:
     name: Publish (Crates.io)
