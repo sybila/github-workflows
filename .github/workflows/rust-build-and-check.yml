@@ -134,7 +134,7 @@ jobs:
           tool: cargo-tarpaulin
       - name: Generate code coverage
         run: |
-          cargo +nightly tarpaulin --lib --doc --examples ${{ env.CARGO_FEATURES }} --out xml
+          cargo +nightly tarpaulin --engine llvm --lib --doc --examples ${{ env.CARGO_FEATURES }} --out xml
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v6
         if: ${{ env.CODECOV_TOKEN != '' }}
