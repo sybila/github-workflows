@@ -13,6 +13,12 @@ on:
         required: false
         type: string
         default: '--all-features'
+      # Builds sometimes need to specify Python version
+      # if they include PyO3 features.
+      python-version:
+        required: false
+        type: string
+        default: '3.13'
     secrets:
       CODECOV_TOKEN:
         required: true
@@ -24,6 +30,7 @@ env:
   RUST_VERSION: ${{ inputs.rust-version }}
   MIN_RUST_VERSION: ${{ inputs.min-rust-version }}
   CARGO_FEATURES: ${{ inputs.features }}
+  PYTHON_VERSION: ${{ inputs.python-version }}
   RUSTFLAGS: "-D warnings"
   RUSTDOCFLAGS: "-D warnings"
 
@@ -109,6 +116,12 @@ jobs:
     steps:
       - name: Checkout.
         uses: actions/checkout@v5
+      # If the builds are using PyO3, they will sometimes
+      # fail without an explicit Python version set.
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           # Tarpaulin requires nightly toolchain.
