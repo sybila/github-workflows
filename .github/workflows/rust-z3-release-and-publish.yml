@@ -14,7 +14,7 @@ on:
         type: string
         default: '--all-features'
     secrets:
-      GEMINI_API_KEY:
+      LLM_API_KEY:
         required: true
       CRATES_IO_API_TOKEN:
         required: true
