@@ -3,9 +3,6 @@ name: Publish to crates.io and generate release info
 on:
   workflow_call:
     inputs:
-      repository-url:
-        required: true
-        type: string
       min-rust-version:
         required: true
         type: string
@@ -24,7 +21,6 @@ on:
 
 env:
   MIN_RUST_VERSION: ${{ inputs.min-rust-version }}
-  REPOSITORY: ${{ inputs.repository-url }}
   Z3_VERSION: ${{ inputs.z3-version }}
   CARGO_FEATURES: ${{ inputs.features }}
 
